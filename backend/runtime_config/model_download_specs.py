@@ -53,7 +53,7 @@ DEFAULT_MODEL_DOWNLOAD_SPECS: dict[ModelFileType, ModelFileDownloadSpec] = {
         description="T5-XXL Encoder (FP8) - Lightweight Text Encoder",
     ),
     "zit": ModelFileDownloadSpec(
-        relative_path=Path("hidream_o1_image-fp8.safetensors"),
+        relative_path=Path("hidream_o1_image-fp8mixed_learned.safetensors"),
         expected_size_bytes=10_100_000_000,
         is_folder=False,
         repo_id="silveroxides/HiDream-O1-Image-Quants",

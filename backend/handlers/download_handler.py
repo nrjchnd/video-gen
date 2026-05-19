@@ -234,7 +234,6 @@ class DownloadHandler(StateHandlerBase):
 
     def _fs_progress_poller(self) -> None:
         """Background poller to update progress using actual filesystem disk allocation."""
-        import threading
         logger.info("Starting filesystem progress poller")
         
         # Wait up to 5 seconds for download to start and transition to is_downloading=True
@@ -244,7 +243,6 @@ class DownloadHandler(StateHandlerBase):
                     break
             time.sleep(0.1)
 
-        start_time = time.monotonic()
         last_downloaded = 0
         
         while True:
@@ -278,6 +276,8 @@ class DownloadHandler(StateHandlerBase):
                             if isinstance(file_state, FileDownloadRunning):
                                 active_file = file_type
                                 break
+                    case _:
+                        pass
             
             if active_file is not None:
                 # Update progress for active file
