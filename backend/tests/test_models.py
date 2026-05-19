@@ -40,7 +40,7 @@ class TestModelsStatus:
         test_state.state.app_settings.ltx_api_key = "test-key"
 
         r = client.get("/api/models/status")
-        te_model = next(m for m in r.json()["models"] if m["name"] == "gemma-3-12b-it-qat-q4_0-unquantized")
+        te_model = next(m for m in r.json()["models"] if m["name"] == "t5xxl_fp8_e4m3fn.safetensors")
         assert te_model["required"] is False
 
     def test_forced_mode_requires_no_local_models(self, client, test_state):
@@ -85,8 +85,8 @@ class TestModelDownload:
         assert data["status"] == "started"
         assert data["skippingTextEncoder"] is False
 
-        snapshot_calls = [c for c in test_state.model_downloader.calls if c["kind"] == "snapshot"]
-        assert snapshot_calls
+        file_calls = [c for c in test_state.model_downloader.calls if c["kind"] == "file"]
+        assert file_calls
 
     def test_already_in_progress(self, client, test_state):
         test_state.downloads.start_download({"checkpoint": ("checkpoint", 100)})

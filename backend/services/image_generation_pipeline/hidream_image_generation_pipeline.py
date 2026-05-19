@@ -6,27 +6,30 @@ import logging
 from typing import Any, cast
 
 import torch
-from PIL.Image import Image as PILImage
 
-from services.services_utils import ImagePipelineOutputLike, PILImageType
+from services.services_utils import ImagePipelineOutputLike
 
 logger = logging.getLogger(__name__)
 
 
 class HiDreamImageGenerationPipeline:
+    device: str
+    tokenizer: Any
+    model: Any
+
     @staticmethod
     def create(
         model_path: str,
         device: str | None = None,
-    ) -> "HiDreamImageGenerationPipeline":
+    ) -> HiDreamImageGenerationPipeline:
         return HiDreamImageGenerationPipeline(model_path=model_path, device=device)
 
     def __init__(self, model_path: str, device: str | None = None) -> None:
         from transformers import AutoModel, AutoTokenizer
         
         self.device = device or "cuda"
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-        self.model = AutoModel.from_pretrained(
+        self.tokenizer = cast(Any, AutoTokenizer).from_pretrained(model_path, trust_remote_code=True)
+        self.model = cast(Any, AutoModel).from_pretrained(
             model_path, 
             trust_remote_code=True, 
             torch_dtype=torch.float16,
@@ -48,11 +51,12 @@ class HiDreamImageGenerationPipeline:
         # We wrap the prompt in the expected format.
         formatted_prompt = f"USER: Generate an image of {prompt}\nASSISTANT: <|image|>"
         
-        torch.manual_seed(seed)
+        torch.manual_seed(seed)  # type: ignore[reportUnknownMemberType]
         
         # This is a simplified generation call assuming the model implements a 'generate_image' method
         # or follows the transformer generation pattern for images.
         # Based on research, HiDream uses a custom generation method.
+        image: Any
         if hasattr(self.model, "generate_image"):
             image = self.model.generate_image(
                 prompt=formatted_prompt,
@@ -64,15 +68,14 @@ class HiDreamImageGenerationPipeline:
         else:
             # Fallback to a generic generate call if 'generate_image' is not found
             # (Adjusting based on actual architecture discovered)
-            inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
-            output = self.model.generate(**inputs, max_new_tokens=1024) # Simplified
+            inputs: Any = self.tokenizer(formatted_prompt, return_tensors="pt")
+            output: Any = self.model.generate(**inputs, max_new_tokens=1024) # Simplified
             # Convert tokens to image (simplified)
-            image = self.model.decode_image(output) 
+            image = self.model.decode_image(output)
 
-        if isinstance(image, list):
-            image = image[0]
+        image_item: Any = cast(Any, image)[0] if isinstance(image, list) else image
             
-        return cast(ImagePipelineOutputLike, type('Output', (), {'images': [image]}))
+        return cast(ImagePipelineOutputLike, type('Output', (), {'images': [image_item]}))
 
     def to(self, device: str) -> None:
         self.device = device

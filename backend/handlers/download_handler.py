@@ -125,9 +125,10 @@ class DownloadHandler(StateHandlerBase):
                             files_completed += 1
                             downloaded_bytes += size
                         case FileDownloadRunning() as running:
-                            current_file = file_type
-                            current_file_progress = int(running.progress * 100)
-                            speed_mbps = int(running.speed_mbps)
+                            if not current_file:
+                                current_file = file_type
+                                current_file_progress = int(running.progress * 100)
+                                speed_mbps = int(running.speed_mbps)
                             downloaded_bytes += running.downloaded_bytes
             case _:
                 status = "idle"
@@ -231,6 +232,71 @@ class DownloadHandler(StateHandlerBase):
 
         self._models_handler.refresh_available_files()
 
+    def _fs_progress_poller(self) -> None:
+        """Background poller to update progress using actual filesystem disk allocation."""
+        import threading
+        logger.info("Starting filesystem progress poller")
+        
+        # Wait up to 5 seconds for download to start and transition to is_downloading=True
+        for _ in range(50):
+            with self._lock:
+                if self.state.is_downloading:
+                    break
+            time.sleep(0.1)
+
+        start_time = time.monotonic()
+        last_downloaded = 0
+        
+        while True:
+            # Check if downloading has stopped
+            with self._lock:
+                if not self.state.is_downloading:
+                    break
+                    
+            # Sum up allocated sizes of all files in `.downloading` directory
+            downloading_dir = self._config.downloading_dir
+            allocated_bytes = 0
+            if downloading_dir.exists():
+                for f in downloading_dir.rglob("*"):
+                    if f.is_file():
+                        try:
+                            stat = f.stat()
+                            blocks = getattr(stat, "st_blocks", None)
+                            if blocks is not None:
+                                allocated_bytes += blocks * 512
+                            else:
+                                allocated_bytes += stat.st_size
+                        except Exception:
+                            pass
+            
+            # Find the active running file
+            active_file: ModelFileType | None = None
+            with self._lock:
+                match self.state.downloading_session:
+                    case dict() as files:
+                        for file_type, file_state in files.items():
+                            if isinstance(file_state, FileDownloadRunning):
+                                active_file = file_type
+                                break
+            
+            if active_file is not None:
+                # Update progress for active file
+                speed_mb = (allocated_bytes - last_downloaded) / (1024 * 1024)
+                last_downloaded = allocated_bytes
+                
+                # Fetch expected size from spec
+                spec = self._config.spec_for(active_file)
+                self.update_file_progress(
+                    active_file,
+                    min(spec.expected_size_bytes, allocated_bytes),
+                    spec.expected_size_bytes,
+                    speed_mb
+                )
+                
+            time.sleep(1.0)
+            
+        logger.info("Filesystem progress poller stopped")
+
     def start_model_download(self, skip_text_encoder: bool = False) -> bool:
         with self._lock:
             if self.state.is_downloading:
@@ -242,6 +308,11 @@ class DownloadHandler(StateHandlerBase):
             on_error=self._on_background_download_error,
             daemon=True,
         )
+
+        import threading
+        t = threading.Thread(target=self._fs_progress_poller, daemon=True)
+        t.start()
+
         return True
 
     def start_text_encoder_download(self) -> bool:
@@ -255,11 +326,19 @@ class DownloadHandler(StateHandlerBase):
             progress_cb = self._make_progress_callback("text_encoder")
             try:
                 self._config.downloading_dir.mkdir(parents=True, exist_ok=True)
-                self._model_downloader.download_snapshot(
-                    repo_id=text_spec.repo_id,
-                    local_dir=str(self._config.downloading_path("text_encoder")),
-                    on_progress=progress_cb,
-                )
+                if text_spec.is_folder:
+                    self._model_downloader.download_snapshot(
+                        repo_id=text_spec.repo_id,
+                        local_dir=str(self._config.downloading_path("text_encoder")),
+                        on_progress=progress_cb,
+                    )
+                else:
+                    self._model_downloader.download_file(
+                        repo_id=text_spec.repo_id,
+                        filename=text_spec.name,
+                        local_dir=str(self._config.downloading_path("text_encoder")),
+                        on_progress=progress_cb,
+                    )
                 self._move_to_final("text_encoder")
             except Exception:
                 self.cleanup_downloading_dir()
@@ -279,4 +358,9 @@ class DownloadHandler(StateHandlerBase):
             on_error=self._on_background_download_error,
             daemon=True,
         )
+
+        import threading
+        t = threading.Thread(target=self._fs_progress_poller, daemon=True)
+        t.start()
+
         return True

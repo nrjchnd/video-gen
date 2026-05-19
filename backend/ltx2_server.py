@@ -149,11 +149,13 @@ def _resolve_app_data_dir() -> Path:
 
 APP_DATA_DIR = _resolve_app_data_dir()
 
-MODELS_DIR_ENV = os.environ.get("LTX_MODELS_DIR")
-if MODELS_DIR_ENV:
-    MODELS_DIR = Path(MODELS_DIR_ENV)
+_models_dir_env = os.environ.get("LTX_MODELS_DIR")
+if _models_dir_env:
+    _models_dir = Path(_models_dir_env)
 else:
-    MODELS_DIR = APP_DATA_DIR / "models"
+    _models_dir = APP_DATA_DIR / "models"
+
+MODELS_DIR = _models_dir
 
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 

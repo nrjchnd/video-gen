@@ -43,10 +43,20 @@ def test_pyright_has_no_errors_or_warnings() -> None:
     )
 
     output = result.stdout.strip() or result.stderr.strip()
-    assert output, "pyright produced no output"
+    # Filter out known non-JSON banner lines from stdout
+    cleaned_lines = [
+        line for line in output.splitlines()
+        if not ("'x86':" in line or "nodeenv" in line)
+    ]
+    cleaned_output = "\n".join(cleaned_lines).strip()
 
     try:
-        payload: dict[str, Any] = json.loads(output)
+        start_idx = cleaned_output.find("{")
+        end_idx = cleaned_output.rfind("}")
+        if start_idx == -1 or end_idx == -1 or end_idx < start_idx:
+            raise json.JSONDecodeError("Outer braces not found", cleaned_output, 0)
+        json_content = cleaned_output[start_idx : end_idx + 1]
+        payload: dict[str, Any] = json.loads(json_content)
     except json.JSONDecodeError:
         normalized = output.lower()
         if "command not found" in normalized or "not found" in normalized:

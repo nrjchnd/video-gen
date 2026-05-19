@@ -48,8 +48,8 @@ def test_downloading_path_is_derived_from_specs(tmp_path):
     config = _build_config(tmp_path)
 
     assert config.downloading_path("checkpoint") == config.downloading_dir
-    assert config.downloading_path("zit") == config.downloading_dir / "Z-Image-Turbo"
-    assert config.downloading_path("text_encoder") == config.downloading_dir / "gemma-3-12b-it-qat-q4_0-unquantized"
+    assert config.downloading_path("zit") == config.downloading_dir
+    assert config.downloading_path("text_encoder") == config.downloading_dir
 
 
 def test_required_model_types_remain_dynamic_for_text_encoder():

@@ -54,16 +54,35 @@ def _patch_http_get_progress(callback: Callable[[int, int], None]) -> Iterator[N
     ``snapshot_download``), but its internal ``http_get`` accepts a private
     ``_tqdm_bar`` kwarg.  We wrap ``http_get`` to inject our own bar when
     the caller hasn't already provided one.
-
-    See ``test_http_get_accepts_tqdm_bar`` — if that test breaks after a
-    huggingface_hub upgrade, this patch needs to be revisited.
     """
+    lock = Lock()
+    shared: dict[str, int] = {"downloaded": 0, "total": 0}
     tqdm_cls = _make_progress_tqdm_class(callback)
     original_http_get: Callable[..., Any] = file_download.http_get  # type: ignore[reportUnknownMemberType]
 
     def _wrapped_http_get(*args: Any, **kwargs: Any) -> None:
-        if kwargs.get("_tqdm_bar") is None:
+        bar = kwargs.get("_tqdm_bar")
+        if bar is None:
             kwargs["_tqdm_bar"] = tqdm_cls(disable=True)
+        else:
+            original_update = bar.update
+            
+            def wrapped_update(n: float | int | None = 1) -> bool | None:
+                res = original_update(n)
+                if n is not None:
+                    with lock:
+                        shared["downloaded"] += int(n)
+                        if hasattr(bar, "total") and bar.total is not None:
+                            shared["total"] = int(bar.total)
+                        downloaded, total = shared["downloaded"], shared["total"]
+                    callback(downloaded, total)
+                return res
+
+            bar.update = wrapped_update
+            if hasattr(bar, "total") and bar.total is not None:
+                with lock:
+                    shared["total"] = int(bar.total)
+
         return original_http_get(*args, **kwargs)
 
     with patch.object(file_download, "http_get", _wrapped_http_get):

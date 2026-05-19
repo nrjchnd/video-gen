@@ -36,8 +36,9 @@ class TestHealth:
         create_fake_model_files()
         r = client.get("/health")
         data = r.json()
-        assert len(data["models_status"]) == 1
+        assert len(data["models_status"]) == 2
         assert data["models_status"][0]["downloaded"] is True
+        assert data["models_status"][1]["downloaded"] is False
 
     def test_cors_header(self, client):
         r = client.get("/health", headers={"Origin": "http://localhost:5173"})

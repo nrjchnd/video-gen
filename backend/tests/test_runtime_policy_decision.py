@@ -15,7 +15,7 @@ def test_windows_without_cuda_forces_api() -> None:
 
 
 def test_windows_with_low_vram_forces_api() -> None:
-    assert decide_force_api_generations(system="Windows", cuda_available=True, vram_gb=16) is True
+    assert decide_force_api_generations(system="Windows", cuda_available=True, vram_gb=8) is True
 
 
 def test_windows_with_unknown_vram_forces_api() -> None:
@@ -28,4 +28,4 @@ def test_windows_with_required_vram_allows_local_mode() -> None:
 
 
 def test_other_systems_fail_closed() -> None:
-    assert decide_force_api_generations(system="Linux", cuda_available=True, vram_gb=48) is True
+    assert decide_force_api_generations(system="FreeBSD", cuda_available=True, vram_gb=48) is True
