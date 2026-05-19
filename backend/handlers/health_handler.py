@@ -58,9 +58,15 @@ class HealthHandler(StateHandlerBase):
             models_status=[
                 ModelStatusItem(
                     id="fast",
-                    name="LTX-2 Fast (Distilled)",
+                    name="Sulphur-2 (Fast Video)",
                     loaded=models_loaded,
                     downloaded=files["checkpoint"] is not None,
+                ),
+                ModelStatusItem(
+                    id="zit",
+                    name="HiDream-O1 (Unified Image)",
+                    loaded=False, # We load HiDream on demand
+                    downloaded=files["zit"] is not None,
                 ),
             ],
         )

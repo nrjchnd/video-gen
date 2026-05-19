@@ -309,7 +309,7 @@ def build_default_service_bundle(config: RuntimeConfig) -> ServiceBundle:
     from services.ic_lora_model_downloader.ic_lora_model_downloader_impl import IcLoraModelDownloaderImpl
     from services.a2v_pipeline.ltx_a2v_pipeline import LTXa2vPipeline
     from services.ic_lora_pipeline.ltx_ic_lora_pipeline import LTXIcLoraPipeline
-    from services.image_generation_pipeline.zit_image_generation_pipeline import ZitImageGenerationPipeline
+    from services.image_generation_pipeline.hidream_image_generation_pipeline import HiDreamImageGenerationPipeline
     from services.ltx_api_client.ltx_api_client_impl import LTXAPIClientImpl
     from services.model_downloader.hugging_face_downloader import HuggingFaceDownloader
     from services.retake_pipeline.ltx_retake_pipeline import LTXRetakePipeline
@@ -337,7 +337,7 @@ def build_default_service_bundle(config: RuntimeConfig) -> ServiceBundle:
         video_api_client=ReplicateVideoClientImpl(http=http),
         palette_sync_client=PaletteSyncClientImpl(http=http),
         fast_video_pipeline_class=LTXFastVideoPipeline,
-        image_generation_pipeline_class=ZitImageGenerationPipeline,
+        image_generation_pipeline_class=HiDreamImageGenerationPipeline,
         ic_lora_pipeline_class=LTXIcLoraPipeline,
         a2v_pipeline_class=LTXa2vPipeline,
         retake_pipeline_class=LTXRetakePipeline,

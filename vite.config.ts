@@ -11,6 +11,10 @@ export default defineConfig({
       {
         entry: 'electron/main.ts',
         onstart(options) {
+          if (process.env.SKIP_ELECTRON) {
+            console.log('Skipping Electron startup as requested by SKIP_ELECTRON env var')
+            return
+          }
           if (process.env.ELECTRON_DEBUG) {
             // --inspect and --remote-debugging-port must come before '.' (the app path)
             options.startup(['--inspect=9229', '--remote-debugging-port=9222', '.', '--no-sandbox'])

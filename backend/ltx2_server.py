@@ -149,7 +149,12 @@ def _resolve_app_data_dir() -> Path:
 
 APP_DATA_DIR = _resolve_app_data_dir()
 
-MODELS_DIR = APP_DATA_DIR / "models"
+MODELS_DIR_ENV = os.environ.get("LTX_MODELS_DIR")
+if MODELS_DIR_ENV:
+    MODELS_DIR = Path(MODELS_DIR_ENV)
+else:
+    MODELS_DIR = APP_DATA_DIR / "models"
+
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -190,7 +195,10 @@ def _resolve_force_api_generations() -> bool:
     cuda_available = gpu_info.get_cuda_available()
     vram_gb = gpu_info.get_vram_total_gb()
 
-    # Server-owned source of truth for mode selection.
+    if os.environ.get("LTX_FORCE_LOCAL") == "1":
+        logger.info("Runtime policy: LTX_FORCE_LOCAL=1 detected, forcing local mode")
+        return False
+
     force_api_generations = decide_force_api_generations(
         system=system,
         cuda_available=cuda_available,
@@ -291,4 +299,5 @@ if __name__ == "__main__":
     warmup_thread = threading.Thread(target=background_warmup, daemon=True)
     warmup_thread.start()
 
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info", access_log=False)
+    host = os.environ.get("LTX_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port, log_level="info", access_log=False)

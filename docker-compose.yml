@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - video-gen-models:/app/models
+      - ./data:/app/data
+      - huggingface-cache:/huggingface
+      - backend-venv:/app/.venv
+    environment:
+      - PYTHONPATH=/app
+      - LTX_APP_DATA_DIR=/app/data
+      - LTX_MODELS_DIR=/app/models
+      - HF_HOME=/huggingface
+      - LTX_HOST=0.0.0.0
+      - LTX_FORCE_LOCAL=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/frontend/node_modules
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8000
+      - SKIP_ELECTRON=1
+
+  frontend-typecheck:
+    image: node:20-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && npx tsc --noEmit"
+
+volumes:
+  backend-venv:
+  video-gen-models:
+  huggingface-cache:

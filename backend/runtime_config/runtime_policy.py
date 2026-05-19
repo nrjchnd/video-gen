@@ -8,12 +8,14 @@ def decide_force_api_generations(system: str, cuda_available: bool, vram_gb: int
     if system == "Darwin":
         return True
 
-    if system == "Windows":
+    if system in ("Windows", "Linux"):
         if not cuda_available:
             return True
         if vram_gb is None:
             return True
-        return vram_gb < 20
+        # LTX-2 requires significant VRAM for local inference.
+        # We allow it if >= 12GB (covering most high-end laptop GPUs).
+        return vram_gb < 12
 
-    # Fail closed for non-target platforms unless explicitly relaxed.
+    # Fail closed for other non-target platforms.
     return True

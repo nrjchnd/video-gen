@@ -9,6 +9,7 @@ dist-electron/
 .vite/
 release/
 *.tsbuildinfo
+AGENT*
 
 # Python
 backend/.venv/

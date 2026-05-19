@@ -32,11 +32,11 @@ MODEL_FILE_ORDER: tuple[ModelFileType, ...] = (
 
 DEFAULT_MODEL_DOWNLOAD_SPECS: dict[ModelFileType, ModelFileDownloadSpec] = {
     "checkpoint": ModelFileDownloadSpec(
-        relative_path=Path("ltx-2.3-22b-distilled.safetensors"),
-        expected_size_bytes=43_000_000_000,
+        relative_path=Path("sulphur_dev_fp8mixed.safetensors"),
+        expected_size_bytes=29_200_000_000,
         is_folder=False,
-        repo_id="Lightricks/LTX-2.3",
-        description="Main transformer model",
+        repo_id="SulphurAI/Sulphur-2-base",
+        description="Sulphur-2 (FP8 Mixed) - Efficient Video Model",
     ),
     "upsampler": ModelFileDownloadSpec(
         relative_path=Path("ltx-2.3-spatial-upscaler-x2-1.0.safetensors"),
@@ -46,18 +46,18 @@ DEFAULT_MODEL_DOWNLOAD_SPECS: dict[ModelFileType, ModelFileDownloadSpec] = {
         description="2x Upscaler",
     ),
     "text_encoder": ModelFileDownloadSpec(
-        relative_path=Path("gemma-3-12b-it-qat-q4_0-unquantized"),
-        expected_size_bytes=25_000_000_000,
-        is_folder=True,
-        repo_id="Lightricks/gemma-3-12b-it-qat-q4_0-unquantized",
-        description="Gemma text encoder (bfloat16)",
+        relative_path=Path("t5xxl_fp8_e4m3fn.safetensors"),
+        expected_size_bytes=4_900_000_000,
+        is_folder=False,
+        repo_id="comfyanonymous/flux_text_encoders",
+        description="T5-XXL Encoder (FP8) - Lightweight Text Encoder",
     ),
     "zit": ModelFileDownloadSpec(
-        relative_path=Path("Z-Image-Turbo"),
-        expected_size_bytes=31_000_000_000,
-        is_folder=True,
-        repo_id="Tongyi-MAI/Z-Image-Turbo",
-        description="Z-Image-Turbo model for text-to-image generation",
+        relative_path=Path("hidream_o1_image-fp8.safetensors"),
+        expected_size_bytes=10_100_000_000,
+        is_folder=False,
+        repo_id="silveroxides/HiDream-O1-Image-Quants",
+        description="HiDream-O1-Image (FP8) - Unified T2I Model",
     ),
 }
 
